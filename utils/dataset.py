@@ -27,7 +27,7 @@ class Cityscapes(object):
 
 
     @classmethod
-    def assing_trainIds(clas_obj, label):
+    def assign_trainIds(clas_obj, label):
         '''
         Map the given label IDs to the train IDs appropriate for training.
         '''
@@ -41,7 +41,6 @@ class Cityscapes(object):
         Load two frames from video squence: current image and key image, and the label coresponding to key image.
         - cast to float
         '''
-        print 'idx ',idx 
 
         raw_data = np.fromstring(image_txn.get(idx),dtype='uint8')
         ndata = raw_data.reshape(cls_obj.h,cls_obj.w,cls_obj.c_image)
@@ -83,4 +82,54 @@ class Cityscapes(object):
 
         
         return current_in_,key_in_, label
+    @classmethod
+    def load_sequence_image(self,idx,split,train_strategy='separate'):
+        '''
+        Load input image and preprocess for parrots
+        - cast to float
+        '''
+        
+        #im = Image.open('{}{}'.format(self.voc_dir, idx))
+        key_full_name = '{}/leftImg8bit/{}/{}_leftImg8bit.png'.format(self.data_dir,split,idx)
+
+        city, shot, frame = idx.split('_')
+        if train_strategy == 'separate':
+            SEQ_LEN = -4
+        elif train_strategy == 'fix_n':
+            SEQ_LEN = - np.random.randint(1,10)
+        elif train_strategy == 'fix_f':
+            SEQ_LEN = - np.random.randint(1,10)
+        elif train_strategy == 'free':
+            SEQ_LEN = np.random.randint(-9,10)
+            if SEQ_LEN >=0:
+                #self.strategy_id = self.strategy2int['fix_f']
+                pass
+        key_im = cv2.imread(key_full_name)
+
+        key_in_ = np.array(key_im,dtype=np.float32)
+        #handing the crash image, we find the no-error image with decreasing the idx
+        for i in range(10):
+            current_full_name = '{}/leftImg8bit_sequence/{}/{}_{}_{:0>6d}_leftImg8bit.png'.format(self.data_dir,split,city,shot,int(frame) + SEQ_LEN-i)
+            current_im = cv2.imread(current_full_name)
+            if current_im is None:
+                continue
+            current_in_ = np.array(current_im,dtype=np.float32)
+            break
+
+        
+        return current_in_,key_in_
+    @classmethod
+    def load_label(self,idx,split):
+        '''
+        Load label image as height x width interger array of label indices.
+        return:
+        - label,with shape(h,w)
+        '''
+        full_name = '{}/gtFine/{}/{}_gtFine_labelIds.png'.format(self.data_dir,split,idx)
+        label = decode_label(full_name)
+
+        label = self.assign_trainIds(label)
+        assert len(label.shape) == 2,'the image seg labe should be 2 dim'
+        return label
+
 
