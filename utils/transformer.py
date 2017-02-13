@@ -18,7 +18,7 @@ def zoom(feat_map,zoom_factor=1):
     #zoom_map = cv2.resize(trans_map,None,fx=zoom_factor,fy=zoom_factor)
     zoom_map = cv2.resize(trans_map,(out_w,out_h))
     return zoom_map.transpose((2,0,1))
-def random_crop(current_image,key_image = None,seg_label,crop_height,crop_witdh,mean,train=True):
+def random_crop(current_image,key_image, seg_label,crop_height,crop_witdh,mean,train=True):
         '''
         apply the deeplab crop methods: fisrt padding the seg_image using mean values and padding 
         the seg_label using ignore_label if necerary.Then random crop when trainning and middle crop when val
@@ -64,11 +64,10 @@ def random_crop(current_image,key_image = None,seg_label,crop_height,crop_witdh,
             w_off = (data_width - crop_witdh) / 2
 
         # roi image
-        if key_crop_imgage is not None:
-            return current_image[h_off:h_off+crop_height, w_off:w_off+crop_witdh,:],key_image[h_off:h_off+crop_height,
+        if key_image is not None:
+            return current_image[h_off:h_off+crop_height, w_off:w_off+crop_witdh,:],key_image[h_off:h_off+crop_height, w_off:w_off+crop_witdh,:],seg_label[h_off:h_off+crop_height,w_off:w_off+crop_witdh]
         else:
-            return current_image[h_off:h_off+crop_height, w_off:w_off+crop_witdh,:],
-                w_off:w_off+crop_witdh,:],seg_label[h_off:h_off+crop_height,w_off:w_off+crop_witdh]
+            return current_image[h_off:h_off+crop_height, w_off:w_off+crop_witdh,:], seg_label[h_off:h_off+crop_height,w_off:w_off+crop_witdh]
 
 
 
