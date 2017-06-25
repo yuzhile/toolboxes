@@ -36,14 +36,21 @@ def _resize_image(x, size, resample):
 
 
 def pad_frame(im, frame_sz, pos_x, pos_y, patch_sz, avg_chan):
+    '''
+    the padded img will be used for detection. we crop patch with square size patch_sz which centered in im with location (pos_x,pos_y).
+    if neccery, we will pad avg_chan 
+    '''
     c = patch_sz / 2
     xleft_pad = tf.maximum(0, -tf.cast(tf.round(pos_x - c), tf.int32))
     ytop_pad = tf.maximum(0, -tf.cast(tf.round(pos_y - c), tf.int32))
     xright_pad = tf.maximum(0, tf.cast(tf.round(pos_x + c), tf.int32) - frame_sz[1])
     ybottom_pad = tf.maximum(0, tf.cast(tf.round(pos_y + c), tf.int32) - frame_sz[0])
+
+    # we all just pad npad, which simplizs the problem.
     npad = tf.reduce_max([xleft_pad, ytop_pad, xright_pad, ybottom_pad])
     paddings = [[npad, npad], [npad, npad], [0, 0]]
     im_padded = im
+    # because tf just pad constant, we sub avg_chan, then we add back the avg_chan, which is eqaul to pad avg_chan
     if avg_chan is not None:
         im_padded = im_padded - avg_chan
     im_padded = tf.pad(im_padded, paddings, mode='CONSTANT')
@@ -72,6 +79,9 @@ def extract_crops_z(im, npad, pos_x, pos_y, sz_src, sz_dst):
 
 
 def extract_crops_x(im, npad, pos_x, pos_y, sz_src0, sz_src1, sz_src2, sz_dst):
+    '''
+    extract search image x, sz_src0 > sz_src1 > sz_src2
+    '''
     # take center of the biggest scaled source patch
     c = sz_src2 / 2
     # get top-right corner of bbox and consider padding
